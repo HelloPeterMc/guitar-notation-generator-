@@ -1,0 +1,14 @@
+README.md
+pyproject.toml
+src/guitar_notation/__init__.py
+src/guitar_notation/api.py
+src/guitar_notation/cli.py
+src/guitar_notation/render.py
+src/guitar_notation/validation.py
+src/guitar_notation_generator.egg-info/PKG-INFO
+src/guitar_notation_generator.egg-info/SOURCES.txt
+src/guitar_notation_generator.egg-info/dependency_links.txt
+src/guitar_notation_generator.egg-info/entry_points.txt
+src/guitar_notation_generator.egg-info/requires.txt
+src/guitar_notation_generator.egg-info/top_level.txt
+tests/test_validation.py

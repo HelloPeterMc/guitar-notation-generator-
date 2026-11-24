@@ -1,0 +1,2 @@
+[console_scripts]
+guitar-notation = guitar_notation.cli:main
