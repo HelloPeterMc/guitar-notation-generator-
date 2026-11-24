@@ -1,0 +1,231 @@
+{
+  "title": "A Sunday Afternoon in Montmartre",
+  "composer": "AI-assisted composition \u2014 draft requiring musical review",
+  "key": "E minor / G major",
+  "tempo": 92,
+  "meter": "4/4",
+  "tuning": [
+    "E2",
+    "A2",
+    "D3",
+    "G3",
+    "B3",
+    "E4"
+  ],
+  "notes": "Illustrative draft only. Supplied chord voicings, melody pitches and tablature are not fully reconciled; review before performance.",
+  "bars": [
+    {
+      "events": [
+        {
+          "duration": 2,
+          "chord": {
+            "name": "Em9",
+            "voicing": [
+              -1,
+              7,
+              5,
+              7,
+              7,
+              7
+            ]
+          },
+          "melody": [
+            "E5"
+          ],
+          "tab": [
+            {
+              "string": 2,
+              "fret": 5
+            }
+          ]
+        },
+        {
+          "duration": 2,
+          "chord": {
+            "name": "Cmaj7#11",
+            "voicing": [
+              8,
+              -1,
+              9,
+              9,
+              7,
+              -1
+            ]
+          },
+          "melody": [
+            "G5"
+          ],
+          "tab": [
+            {
+              "string": 2,
+              "fret": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "events": [
+        {
+          "duration": 2,
+          "chord": {
+            "name": "Am9",
+            "voicing": [
+              5,
+              -1,
+              5,
+              5,
+              5,
+              7
+            ]
+          },
+          "melody": [
+            "F#5"
+          ],
+          "tab": [
+            {
+              "string": 2,
+              "fret": 7
+            }
+          ]
+        },
+        {
+          "duration": 2,
+          "chord": {
+            "name": "D13",
+            "voicing": [
+              -1,
+              5,
+              4,
+              5,
+              7,
+              7
+            ]
+          },
+          "melody": [
+            "D#5"
+          ],
+          "tab": [
+            {
+              "string": 2,
+              "fret": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "events": [
+        {
+          "duration": 2,
+          "chord": {
+            "name": "B7alt",
+            "voicing": [
+              7,
+              -1,
+              7,
+              8,
+              8,
+              -1
+            ]
+          },
+          "melody": [
+            "G5"
+          ],
+          "tab": [
+            {
+              "string": 1,
+              "fret": 3
+            }
+          ]
+        },
+        {
+          "duration": 2,
+          "chord": {
+            "name": "Em6",
+            "voicing": [
+              -1,
+              7,
+              6,
+              9,
+              8,
+              -1
+            ]
+          },
+          "melody": [
+            "F#5"
+          ],
+          "tab": [
+            {
+              "string": 1,
+              "fret": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "events": [
+        {
+          "duration": 1,
+          "chord": {
+            "name": "Em6",
+            "voicing": [
+              -1,
+              7,
+              6,
+              9,
+              8,
+              -1
+            ]
+          },
+          "melody": [
+            "C5"
+          ],
+          "tab": [
+            {
+              "string": 2,
+              "fret": 1
+            }
+          ]
+        },
+        {
+          "duration": 1,
+          "melody": [
+            "B4"
+          ],
+          "tab": [
+            {
+              "string": 2,
+              "fret": 0
+            }
+          ]
+        },
+        {
+          "duration": 1,
+          "melody": [
+            "A4"
+          ],
+          "tab": [
+            {
+              "string": 3,
+              "fret": 2
+            }
+          ]
+        },
+        {
+          "duration": 1,
+          "melody": [
+            "E4"
+          ],
+          "tab": [
+            {
+              "string": 3,
+              "fret": 9
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
