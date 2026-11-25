@@ -1,0 +1,156 @@
+{
+  "title": "The Last Petal",
+  "composer": "Original AI-assisted composition",
+  "key": "B minor",
+  "key_signature": "B minor",
+  "tempo": 64,
+  "meter": "6/8",
+  "pitch_convention": "sounding",
+  "tuning": ["E2", "A2", "D3", "G3", "B3", "E4"],
+  "notes": "Lo-fi soft jazz / flamenco groove, warm 60s tube vibe. A slow, rain-washed 6/8 lullaby: the melody drifts downward like petals in gusts of wind, then briefly lifts on A# in the F#7 before settling back into B minor.",
+  "layout": {
+    "bars_per_line": 4
+  },
+  "bars": [
+    {
+      "events": [
+        {
+          "duration": 8,
+          "chord": {"name": "Bm9", "voicing": [-1, 2, 0, 2, 2, 2]},
+          "play_chord": true,
+          "melody": ["F#4"]
+        },
+        {"duration": 8, "melody": ["E4"], "tab": [{"string": 1, "fret": 0}]},
+        {"duration": 8, "melody": ["D4"], "tab": [{"string": 2, "fret": 3}]},
+        {
+          "duration": 8,
+          "chord": {"name": "Bm9", "voicing": [-1, 2, 0, 2, 2, 2]},
+          "play_chord": true,
+          "melody": ["F#4"]
+        },
+        {"duration": 8, "melody": ["B3"], "tab": [{"string": 2, "fret": 0}]},
+        {"duration": 8, "melody": ["C#4"], "tab": [{"string": 2, "fret": 2}]}
+      ]
+    },
+    {
+      "events": [
+        {
+          "duration": 8,
+          "chord": {"name": "Gmaj7", "voicing": [3, -1, 4, 4, 3, -1]},
+          "play_chord": true,
+          "melody": ["D4"]
+        },
+        {"duration": 8, "melody": ["B3"], "tab": [{"string": 2, "fret": 0}]},
+        {"duration": 8, "melody": ["A3"], "tab": [{"string": 3, "fret": 2}]},
+        {
+          "duration": 8,
+          "chord": {"name": "Gmaj7", "voicing": [3, -1, 4, 4, 3, -1]},
+          "play_chord": true,
+          "melody": ["D4"]
+        },
+        {"duration": 8, "melody": ["G4"], "tab": [{"string": 1, "fret": 3}]},
+        {"duration": 8, "melody": ["F#4"], "tab": [{"string": 1, "fret": 2}]}
+      ]
+    },
+    {
+      "events": [
+        {
+          "duration": 8,
+          "chord": {"name": "Dmaj7", "voicing": [-1, -1, 0, 2, 2, 2]},
+          "play_chord": true,
+          "melody": ["F#4"]
+        },
+        {"duration": 8, "melody": ["A4"], "tab": [{"string": 1, "fret": 5}]},
+        {"duration": 8, "melody": ["F#4"], "tab": [{"string": 1, "fret": 2}]},
+        {
+          "duration": 8,
+          "chord": {"name": "Dmaj7", "voicing": [-1, -1, 0, 2, 2, 2]},
+          "play_chord": true,
+          "melody": ["F#4"]
+        },
+        {"duration": 8, "melody": ["E4"], "tab": [{"string": 1, "fret": 0}]},
+        {"duration": 8, "melody": ["D4"], "tab": [{"string": 2, "fret": 3}]}
+      ]
+    },
+    {
+      "events": [
+        {
+          "duration": 8,
+          "chord": {"name": "F#7", "voicing": [2, 4, 2, 3, 2, 2]},
+          "play_chord": true,
+          "melody": ["F#4"]
+        },
+        {"duration": 8, "melody": ["A#4"], "tab": [{"string": 1, "fret": 6}]},
+        {"duration": 8, "melody": ["C#5"], "tab": [{"string": 1, "fret": 9}]},
+        {
+          "duration": 8,
+          "chord": {"name": "F#7", "voicing": [2, 4, 2, 3, 2, 2]},
+          "play_chord": true,
+          "melody": ["F#4"]
+        },
+        {"duration": 8, "melody": ["E4"], "tab": [{"string": 1, "fret": 0}]},
+        {"duration": 8, "melody": ["A#4"], "tab": [{"string": 1, "fret": 6}]}
+      ]
+    },
+    {
+      "events": [
+        {
+          "duration": 8,
+          "chord": {"name": "Em9", "voicing": [0, 2, 4, 0, 3, 0]},
+          "play_chord": true,
+          "melody": ["E4"]
+        },
+        {"duration": 8, "melody": ["G4"], "tab": [{"string": 1, "fret": 3}]},
+        {"duration": 8, "melody": ["F#4"], "tab": [{"string": 1, "fret": 2}]},
+        {
+          "duration": 8,
+          "chord": {"name": "Em9", "voicing": [0, 2, 4, 0, 3, 0]},
+          "play_chord": true,
+          "melody": ["E4"]
+        },
+        {"duration": 8, "melody": ["B4"], "tab": [{"string": 1, "fret": 7}]},
+        {"duration": 8, "melody": ["G4"], "tab": [{"string": 1, "fret": 3}]}
+      ]
+    },
+    {
+      "events": [
+        {
+          "duration": 8,
+          "chord": {"name": "Gmaj7", "voicing": [3, -1, 4, 4, 3, -1]},
+          "play_chord": true,
+          "melody": ["D4"]
+        },
+        {"duration": 8, "melody": ["B3"], "tab": [{"string": 2, "fret": 0}]},
+        {"duration": 8, "melody": ["A3"], "tab": [{"string": 3, "fret": 2}]},
+        {
+          "duration": 8,
+          "chord": {"name": "Gmaj7", "voicing": [3, -1, 4, 4, 3, -1]},
+          "play_chord": true,
+          "melody": ["D4"]
+        },
+        {"duration": 8, "melody": ["F#4"], "tab": [{"string": 1, "fret": 2}]},
+        {"duration": 8, "melody": ["G4"], "tab": [{"string": 1, "fret": 3}]}
+      ]
+    },
+    {
+      "events": [
+        {
+          "duration": 8,
+          "chord": {"name": "F#7", "voicing": [2, 4, 2, 3, 2, 2]},
+          "play_chord": true,
+          "melody": ["F#4"]
+        },
+        {"duration": 8, "melody": ["A#4"], "tab": [{"string": 1, "fret": 6}]},
+        {"duration": 8, "melody": ["C#5"], "tab": [{"string": 1, "fret": 9}]},
+        {
+          "duration": 8,
+          "chord": {"name": "Bm9", "voicing": [-1, 2, 0, 2, 2, 2]},
+          "play_chord": true,
+          "melody": ["F#4"]
+        },
+        {"duration": 8, "melody": ["A4"], "tab": [{"string": 1, "fret": 5}]},
+        {"duration": 8, "melody": ["B4"], "tab": [{"string": 1, "fret": 7}]}
+      ]
+    }
+  ]
+}

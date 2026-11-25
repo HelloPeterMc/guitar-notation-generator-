@@ -35,3 +35,10 @@ Run from this skill's folder (or add its `scripts/` directory to `PYTHONPATH`). 
 
 ## Layout notes
 Chord diagrams live in a separate invisible voice timed from the music, so each sits above its beat. If diagrams crowd each other, set `"layout": {"bars_per_line": 2}` in the JSON. Output was designed for LilyPond 2.24.
+
+## Musical style & vibe
+- Every song should evoke a **lo-fi, mellow, soft jazz / flamenco / warm 1960s tube amp & vinyl** aesthetic:
+  - Favor extended and colorful voicings (`Em9`, `Cmaj7#11`, `Am9`, `B7b13`, `Fmaj7`, `Dm9`, `E7b9`, Andalusian cadences, and smooth voice-leading) over basic open power chords.
+  - Keep melodies lyrical, expressive, and unhurried with space to breathe.
+  - Include style keywords in `notes` (e.g., `"Lo-fi soft jazz / flamenco groove, warm 60s tube vibe"`) so the MIDI arranger selects the matching Mellotron flute, upright bass, brushed drums, and muted brass palette.
+- Rendering automatically clears previous `.md`, `.ly`, `.pdf`, and `.mid` files in `--out` before writing the new score and 7-track MIDI file.

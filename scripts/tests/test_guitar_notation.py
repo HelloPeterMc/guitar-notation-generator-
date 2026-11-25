@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from guitar_notation.render import chord_changes, render_lilypond, render_markdown  # noqa: E402
+from guitar_notation.midi_arranger import render_midi_bytes  # noqa: E402
 from guitar_notation.validation import auto_position, check_song, chord_spec, analyze_chord, midi_note  # noqa: E402
 
 EXAMPLE = json.loads((ROOT / "references" / "example.json").read_text(encoding="utf-8"))
@@ -58,10 +59,12 @@ class ValidationTests(unittest.TestCase):
 
     def test_bar_length_and_dotted_durations(self):
         song = deepcopy(EXAMPLE)
-        song["bars"][3]["events"][3]["duration"] = 8
-        self.assertTrue(any("Bar 4" in e for e in check_song(song)[0]))
-        song["bars"][3]["events"][2]["duration"] = "4."
-        song["bars"][3]["events"][3]["duration"] = 8
+        song["bars"][0]["events"][0]["duration"] = 8
+        self.assertTrue(any("Bar 1" in e for e in check_song(song)[0]))
+
+        song = deepcopy(EXAMPLE)
+        song["bars"][0]["events"][1]["duration"] = "8."
+        song["bars"][0]["events"][2]["duration"] = 16
         self.assertEqual(check_song(song)[0], [])
 
     def test_play_chord_melody_must_be_top_note(self):
@@ -89,28 +92,42 @@ class RenderTests(unittest.TestCase):
 
     def test_chord_voice_covers_whole_song(self):
         marks, total = chord_changes(EXAMPLE)
-        self.assertEqual(total, Fraction(4))
+        self.assertEqual(total, Fraction(8))
         ly = render_lilypond(EXAMPLE)
         skips = [int(x) for x in re.findall(r"s64\*(\d+)", ly)]
-        self.assertEqual(sum(skips), 4 * 64)
-        self.assertEqual([c["name"] for _, c in marks], ["Em9", "Cmaj7#11", "Am9", "D13", "B7b13", "Em6"])
+        self.assertEqual(sum(skips), 8 * 64)
+        self.assertEqual(
+            [c["name"] for _, c in marks],
+            ["Em7", "Fmaj7", "Em7", "Dm7", "Fmaj7", "Dm7", "Fmaj7", "Em7"],
+        )
 
     def test_repeated_chord_gets_one_diagram(self):
         song = deepcopy(EXAMPLE)
-        song["bars"][3]["events"][0]["chord"] = deepcopy(song["bars"][2]["events"][2]["chord"])
-        self.assertEqual(len(chord_changes(song)[0]), 6)
+        first_bar = song["bars"][0]
+        song["bars"] = [{"events": [first_bar["events"][0], first_bar["events"][3]]}]
+        self.assertEqual([c["name"] for _, c in chord_changes(song)[0]], ["Em7"])
 
     def test_staff_and_tab_have_same_rhythm(self):
         ly = render_lilypond(EXAMPLE)
         staff = re.search(r"melodyStaff = \{(.*?)\n\}", ly, re.S).group(1)
         tab = re.search(r"melodyTab = \{(.*?)\n\}", ly, re.S).group(1)
-        strip = lambda t: re.sub(r"\\\d", "", re.sub(r"%.*", "", t))
-        self.assertEqual(strip(staff).split(), strip(tab).split())
+        event_durations = lambda voice: re.findall(
+            r"(?:<[^>]+>|[a-gr](?:is|es)?[',]*)(16|1|2|4|8)(\.{0,2})", voice
+        )
+        self.assertEqual(event_durations(staff), event_durations(tab))
+        self.assertEqual(len(event_durations(staff)), sum(len(bar["events"]) for bar in EXAMPLE["bars"]))
 
     def test_markdown_mentions_every_chord(self):
         md = render_markdown(EXAMPLE)
-        for name in ("Em9", "Cmaj7#11", "Am9", "D13", "B7b13", "Em6"):
+        for name in ("Em7", "Fmaj7", "Dm7"):
             self.assertIn(name, md)
+
+
+class MidiTests(unittest.TestCase):
+    def test_midi_renders_with_unnamed_conductor_track(self):
+        midi = render_midi_bytes(EXAMPLE)
+        self.assertEqual(midi[:4], b"MThd")
+        self.assertEqual(int.from_bytes(midi[10:12], "big"), 8)
 
 
 if __name__ == "__main__":

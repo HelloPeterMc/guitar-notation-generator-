@@ -184,9 +184,11 @@ def lpitch(note):
     return n + ("'" * (o - 3) if o >= 4 else "," * (3 - o))
 
 
+# --------------------------------------------------------------------------
+# LilyPond (Stacked Melody Staff + Chords Staff + Unified TabStaff)
+# --------------------------------------------------------------------------
 def _event_ly(notes, token, strings):
-    """One LilyPond event. With strings=True each note carries its string hint
-    (e.g. e'4\\1) so the TabStaff uses exactly the strings in the JSON."""
+    """One LilyPond event. With strings=True each note carries its string hint."""
     if not notes:
         return "r" + token
 
@@ -195,6 +197,37 @@ def _event_ly(notes, token, strings):
     if len(notes) == 1:
         return lpitch(notes[0]["name"]) + token + hint(notes[0])
     return "<" + " ".join(lpitch(n["name"]) + hint(n) for n in notes) + ">" + token
+
+
+def _split_melody_and_chords(song, ev):
+    """Split an event into (melody_notes, chord_notes) while keeping full notes for Tab."""
+    full_notes = resolve_event(song, ev)
+    if not full_notes:
+        return [], [], []
+
+    # Explicit melody field takes priority for the top Melody staff
+    if ev.get("melody"):
+        mel_midis = {midi_note(m) for m in ev["melody"]}
+        melody_notes = [n for n in full_notes if n["midi"] in mel_midis]
+        if not melody_notes:
+            flats = use_flats(song)
+            melody_notes = [{"midi": m, "name": note_name(m, flats), "string": 1, "fret": 0}
+                            for m in sorted(mel_midis)]
+    elif ev.get("play_chord") or len(full_notes) > 1:
+        # In chord-melody events without explicit melody, top voice goes to Melody staff
+        melody_notes = [full_notes[-1]]
+    else:
+        melody_notes = list(full_notes)
+
+    # Chord staff gets full voicings whenever a chord is struck (or multi-note voicing plays)
+    if ev.get("play_chord") and ev.get("chord"):
+        chord_notes = list(full_notes)
+    elif len(full_notes) > 1:
+        chord_notes = list(full_notes)
+    else:
+        chord_notes = []
+
+    return melody_notes, chord_notes, full_notes
 
 
 def fret_markup(c):
@@ -232,25 +265,27 @@ def _tonic_ly(tonic):
     if acc == "#":
         return letter + "is"
     if acc == "b":
-        return letter + "es"  # ees, aes, bes ... are valid LilyPond names
+        return letter + "es"
     return letter
 
 
 def render_lilypond(song):
     n, d, _ = parse_meter(song["meter"])
     nbars, bpl = len(song["bars"]), _bars_per_line(song)
-    staff, tabs = [], []
+    mel_staff, chd_staff, tabs = [], [], []
     for bi, bar in enumerate(song["bars"], 1):
-        s, t = [], []
+        m_ev, c_ev, t_ev = [], [], []
         for ev in bar["events"]:
             token = parse_duration(ev["duration"])[0]
-            notes = resolve_event(song, ev)
-            s.append(_event_ly(notes, token, False))
-            t.append(_event_ly(notes, token, True))
+            mel_notes, chd_notes, full_notes = _split_melody_and_chords(song, ev)
+            m_ev.append(_event_ly(mel_notes, token, False))
+            c_ev.append(_event_ly(chd_notes, token, False))
+            t_ev.append(_event_ly(full_notes, token, True))
         end = ' \\bar "|."' if bi == nbars else " |"
         brk = " \\break" if bi % bpl == 0 and bi < nbars else ""
-        staff.append(f"  % Bar {bi}\n  " + " ".join(s) + end + brk)
-        tabs.append(f"  % Bar {bi}\n  " + " ".join(t) + end)
+        mel_staff.append(f"  % Bar {bi}\n  " + " ".join(m_ev) + end + brk)
+        chd_staff.append(f"  % Bar {bi}\n  " + " ".join(c_ev) + end)
+        tabs.append(f"  % Bar {bi}\n  " + " ".join(t_ev) + end)
 
     key = ""
     parts = _key_parts(song)
@@ -267,7 +302,8 @@ def render_lilypond(song):
 
     lines = ['\\version "2.24.0"', "", "\\header {", *header, "}", "",
              "\\paper {", '  #(set-paper-size "a4")', "  ragged-right = ##f", "  ragged-last = ##f", "}", "",
-             "melodyStaff = {", *staff, "}", "",
+             "melodyStaff = {", *mel_staff, "}", "",
+             "chordsStaff = {", *chd_staff, "}", "",
              "melodyTab = {", *tabs, "}", "",
              "chordDiagrams = {", "  " + chord_voice(song), "}", "",
              "\\score {", "  <<",
@@ -277,16 +313,34 @@ def render_lilypond(song):
              "        \\melodyStaff", "      }",
              '      \\new Voice = "chords" { \\chordDiagrams }',
              "    >>",
+             '    \\new Staff = "harmony" \\with { instrumentName = "Chords" } {',
+             f'      \\clef "treble_8" \\time {n}/{d} {key}',
+             "      \\chordsStaff",
+             "    }",
              '    \\new TabStaff = "guitar" \\with { instrumentName = "Guitar"' + tuned + " } {",
              f"      \\clef moderntab \\time {n}/{d}", "      \\melodyTab", "    }",
              "  >>", "  \\layout { ragged-right = ##f }", "}"]
     return "\n".join(lines) + "\n"
 
 
-def write_outputs(song, outdir, stem="score", warnings=(), include_midi=True):
+def _clean_output_dir(out: Path):
+    """Remove previous generated score artifacts so each prompt starts fresh."""
+    if not out.exists():
+        return
+    for ext in ("*.md", "*.ly", "*.pdf", "*.mid"):
+        for old_file in out.glob(ext):
+            try:
+                old_file.unlink()
+            except OSError:
+                pass
+
+
+def write_outputs(song, outdir, stem="score", warnings=(), include_midi=True, clean_first=True):
     from .midi_arranger import write_midi
 
     out = Path(outdir)
+    if clean_first:
+        _clean_output_dir(out)
     out.mkdir(parents=True, exist_ok=True)
     md, ly = out / f"{stem}.md", out / f"{stem}.ly"
     md.write_text(render_markdown(song, warnings), encoding="utf-8")
