@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "guitar-notation song (v0.2)",
+  "description": "All pitches are SOUNDING pitch (C4 = middle C). Tuning low to high. Strings 1 = high e .. 6 = low E. Voicings low E to high e, -1 = muted. The tool's validator checks more than this schema can (melody equals tab, chord names equal voicings, bar lengths).",
+  "type": "object",
+  "required": ["title", "tempo", "meter", "tuning", "bars"],
+  "properties": {
+    "title": {"type": "string", "minLength": 1},
+    "composer": {"type": "string"},
+    "key": {"type": "string", "description": "Free text shown in the Markdown"},
+    "key_signature": {"type": "string", "pattern": "^[A-Ga-g][#b]? (major|minor)$", "description": "Engraved key signature, e.g. \"E minor\""},
+    "accidentals": {"enum": ["sharps", "flats"]},
+    "tempo": {"type": "integer", "minimum": 1, "description": "Quarter-note BPM"},
+    "meter": {"type": "string", "pattern": "^[1-9][0-9]*/(1|2|4|8|16)$"},
+    "pitch_convention": {"const": "sounding"},
+    "tuning": {
+      "type": "array", "minItems": 6, "maxItems": 6,
+      "items": {"type": "string", "pattern": "^[A-G][#b]?-?[0-9]+$"},
+      "description": "Low string to high string. Standard: E2 A2 D3 G3 B3 E4"
+    },
+    "notes": {"type": "string", "description": "Uncertainties, assumptions, things to review"},
+    "layout": {"type": "object", "properties": {"bars_per_line": {"type": "integer", "minimum": 1}}},
+    "bars": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "required": ["events"],
+        "properties": {
+          "events": {
+            "type": "array", "minItems": 1,
+            "items": {
+              "type": "object", "required": ["duration"],
+              "properties": {
+                "duration": {"description": "1, 2, 4, 8 or 16; dotted as a string, e.g. \"4.\"",
+                              "oneOf": [{"enum": [1, 2, 4, 8, 16]}, {"type": "string", "pattern": "^(1|2|4|8|16)\\.{0,2}$"}]},
+                "chord": {
+                  "type": "object", "required": ["name", "voicing"],
+                  "properties": {
+                    "name": {"type": "string"},
+                    "voicing": {"type": "array", "minItems": 6, "maxItems": 6, "items": {"type": "integer", "minimum": -1, "maximum": 24}},
+                    "show": {"type": "boolean", "description": "Force a diagram even if the chord has not changed"}
+                  }
+                },
+                "play_chord": {"type": "boolean", "description": "Play the whole voicing here (chord-melody). Tab comes from the voicing; melody, if given, must be its single top note."},
+                "melody": {"type": "array", "items": {"type": "string", "pattern": "^[A-G][#b]?-?[0-9]+$"}},
+                "tab": {
+                  "type": "array",
+                  "items": {"type": "object", "required": ["string", "fret"],
+                             "properties": {"string": {"type": "integer", "minimum": 1, "maximum": 6},
+                                            "fret": {"type": "integer", "minimum": 0, "maximum": 24}}}
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

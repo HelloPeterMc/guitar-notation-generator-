@@ -1,0 +1,176 @@
+{
+  "title": "Blue Hour in E Phrygian",
+  "composer": "Original AI-assisted composition",
+  "key": "E Phrygian",
+  "key_signature": "C major",
+  "tempo": 68,
+  "meter": "4/4",
+  "pitch_convention": "sounding",
+  "tuning": ["E2", "A2", "D3", "G3", "B3", "E4"],
+  "notes": "Slow lo-fi jazz guitar with a light flamenco touch: Em7 to Fmaj7 leans on the Phrygian F-to-E half-step, with Dm7 adding a darker turn. The only chords are Em7, Fmaj7, and Dm7; all harmony and melody notes stay within E Phrygian (E F G A B C D). Play the chord stabs softly with a little rasgueado-style accent and a relaxed, slightly swung feel.",
+  "layout": {
+    "bars_per_line": 4
+  },
+  "bars": [
+    {
+      "events": [
+        {
+          "duration": 4,
+          "chord": {"name": "Em7", "voicing": [0, 2, 0, 0, 0, 0]},
+          "play_chord": true,
+          "melody": ["E4"]
+        },
+        {"duration": 8, "melody": ["G4"], "tab": [{"string": 1, "fret": 3}]},
+        {"duration": 8, "melody": ["F4"], "tab": [{"string": 1, "fret": 1}]},
+        {
+          "duration": 4,
+          "chord": {"name": "Em7", "voicing": [0, 2, 0, 0, 0, 0]},
+          "play_chord": true,
+          "melody": ["E4"]
+        },
+        {"duration": 8, "melody": ["F4"], "tab": [{"string": 1, "fret": 1}]},
+        {"duration": 8, "melody": ["E4"], "tab": [{"string": 1, "fret": 0}]}
+      ]
+    },
+    {
+      "events": [
+        {
+          "duration": 4,
+          "chord": {"name": "Fmaj7", "voicing": [-1, -1, 3, 2, 1, 0]},
+          "play_chord": true,
+          "melody": ["E4"]
+        },
+        {"duration": 8, "melody": ["G4"], "tab": [{"string": 1, "fret": 3}]},
+        {"duration": 8, "melody": ["F4"], "tab": [{"string": 1, "fret": 1}]},
+        {
+          "duration": 4,
+          "chord": {"name": "Fmaj7", "voicing": [-1, -1, 3, 2, 1, 0]},
+          "play_chord": true,
+          "melody": ["E4"]
+        },
+        {"duration": 8, "melody": ["A4"], "tab": [{"string": 1, "fret": 5}]},
+        {"duration": 8, "melody": ["G4"], "tab": [{"string": 1, "fret": 3}]}
+      ]
+    },
+    {
+      "events": [
+        {
+          "duration": 4,
+          "chord": {"name": "Em7", "voicing": [0, 2, 0, 0, 0, 0]},
+          "play_chord": true,
+          "melody": ["E4"]
+        },
+        {"duration": 8, "melody": ["B4"], "tab": [{"string": 1, "fret": 7}]},
+        {"duration": 8, "melody": ["A4"], "tab": [{"string": 1, "fret": 5}]},
+        {
+          "duration": 4,
+          "chord": {"name": "Em7", "voicing": [0, 2, 0, 0, 0, 0]},
+          "play_chord": true,
+          "melody": ["E4"]
+        },
+        {"duration": 8, "melody": ["G4"], "tab": [{"string": 1, "fret": 3}]},
+        {"duration": 8, "melody": ["F4"], "tab": [{"string": 1, "fret": 1}]}
+      ]
+    },
+    {
+      "events": [
+        {
+          "duration": 4,
+          "chord": {"name": "Dm7", "voicing": [-1, -1, 0, 2, 1, 1]},
+          "play_chord": true,
+          "melody": ["F4"]
+        },
+        {"duration": 8, "melody": ["E4"], "tab": [{"string": 1, "fret": 0}]},
+        {"duration": 8, "melody": ["D4"], "tab": [{"string": 2, "fret": 3}]},
+        {
+          "duration": 4,
+          "chord": {"name": "Dm7", "voicing": [-1, -1, 0, 2, 1, 1]},
+          "play_chord": true,
+          "melody": ["F4"]
+        },
+        {"duration": 8, "melody": ["C4"], "tab": [{"string": 2, "fret": 1}]},
+        {"duration": 8, "melody": ["D4"], "tab": [{"string": 2, "fret": 3}]}
+      ]
+    },
+    {
+      "events": [
+        {
+          "duration": 4,
+          "chord": {"name": "Fmaj7", "voicing": [-1, -1, 3, 2, 1, 0]},
+          "play_chord": true,
+          "melody": ["E4"]
+        },
+        {"duration": 8, "melody": ["F4"], "tab": [{"string": 1, "fret": 1}]},
+        {"duration": 8, "melody": ["G4"], "tab": [{"string": 1, "fret": 3}]},
+        {
+          "duration": 4,
+          "chord": {"name": "Fmaj7", "voicing": [-1, -1, 3, 2, 1, 0]},
+          "play_chord": true,
+          "melody": ["E4"]
+        },
+        {"duration": 8, "melody": ["A4"], "tab": [{"string": 1, "fret": 5}]},
+        {"duration": 8, "melody": ["G4"], "tab": [{"string": 1, "fret": 3}]}
+      ]
+    },
+    {
+      "events": [
+        {
+          "duration": 4,
+          "chord": {"name": "Dm7", "voicing": [-1, -1, 0, 2, 1, 1]},
+          "play_chord": true,
+          "melody": ["F4"]
+        },
+        {"duration": 8, "melody": ["E4"], "tab": [{"string": 1, "fret": 0}]},
+        {"duration": 8, "melody": ["C4"], "tab": [{"string": 2, "fret": 1}]},
+        {
+          "duration": 4,
+          "chord": {"name": "Dm7", "voicing": [-1, -1, 0, 2, 1, 1]},
+          "play_chord": true,
+          "melody": ["F4"]
+        },
+        {"duration": 8, "melody": ["D4"], "tab": [{"string": 2, "fret": 3}]},
+        {"duration": 8, "melody": ["C4"], "tab": [{"string": 2, "fret": 1}]}
+      ]
+    },
+    {
+      "events": [
+        {
+          "duration": 4,
+          "chord": {"name": "Fmaj7", "voicing": [-1, -1, 3, 2, 1, 0]},
+          "play_chord": true,
+          "melody": ["E4"]
+        },
+        {"duration": 8, "melody": ["G4"], "tab": [{"string": 1, "fret": 3}]},
+        {"duration": 8, "melody": ["A4"], "tab": [{"string": 1, "fret": 5}]},
+        {
+          "duration": 4,
+          "chord": {"name": "Fmaj7", "voicing": [-1, -1, 3, 2, 1, 0]},
+          "play_chord": true,
+          "melody": ["E4"]
+        },
+        {"duration": 8, "melody": ["G4"], "tab": [{"string": 1, "fret": 3}]},
+        {"duration": 8, "melody": ["F4"], "tab": [{"string": 1, "fret": 1}]}
+      ]
+    },
+    {
+      "events": [
+        {
+          "duration": 4,
+          "chord": {"name": "Em7", "voicing": [0, 2, 0, 0, 0, 0]},
+          "play_chord": true,
+          "melody": ["E4"]
+        },
+        {"duration": 8, "melody": ["F4"], "tab": [{"string": 1, "fret": 1}]},
+        {"duration": 8, "melody": ["G4"], "tab": [{"string": 1, "fret": 3}]},
+        {
+          "duration": 4,
+          "chord": {"name": "Em7", "voicing": [0, 2, 0, 0, 0, 0]},
+          "play_chord": true,
+          "melody": ["E4"]
+        },
+        {"duration": 8, "melody": ["F4"], "tab": [{"string": 1, "fret": 1}]},
+        {"duration": 8, "melody": ["E4"], "tab": [{"string": 1, "fret": 0}]}
+      ]
+    }
+  ]
+}

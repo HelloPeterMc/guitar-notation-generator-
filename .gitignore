@@ -1,1 +1,6 @@
-.venv/\n__pycache__/\n.pytest_cache/\n*.egg-info/\noutput/\n.DS_Store\n
+.venv
+__pycache__
+.pytest_cache
+*.egg-info
+output
+.DS_Store\n
