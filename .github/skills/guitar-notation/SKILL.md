@@ -1,44 +1,52 @@
 ---
 name: guitar-notation
-description: Turn guitar song ideas (chords, melody, tab, chord-melody arrangements) into validated structured JSON and render a readable lead sheet with a melody staff, guitar tablature and chord-shape diagrams above the bars where chords change (LilyPond PDF), plus agent-friendly Markdown. Use whenever the user asks for guitar chords, melodies, riffs, tab, chord progressions, chord-melody or "sheet music / a score / a PDF" for guitar, or wants an AI-written guitar arrangement checked, fixed or made readable, even if they never say "JSON" or "LilyPond".
+description: Create, validate, and render guitar song arrangements or structured practice lessons from natural-language prompts. Produces Markdown, LilyPond score and tablature, optional PDF, and a seven-track practice MIDI. Use when asked for guitar songs, riffs, chord progressions, chord-melody, sheet music, a score, MIDI backing, or a guitar lesson plan.
 ---
 
 # Guitar notation
 
-Pipeline: song JSON -> validator -> Markdown (for agents) + LilyPond `.ly` -> PDF (for musicians).
-The validator exists because AI-written guitar material routinely contradicts itself. Do not skip it.
+This repository has one implementation under `src/guitar_notation/`. Use it for both CLI and agent tasks; do not use or recreate a second copy. Start in the repository root.
 
 ## Workflow
-1. Read `references/agent-prompt.md` and follow its conventions when writing the song.
-2. Write the song as JSON (`references/schema.json`; a verified full example is `references/example.json`). Prefer shapes from `references/verified-voicings.md`.
-3. Validate: `PYTHONPATH=scripts python -m guitar_notation check song.json`
-4. Fix every error by correcting the music, not by deleting the data. Warnings (for example an unparseable chord name) need a look but do not block.
-5. Render: `PYTHONPATH=scripts python -m guitar_notation render song.json --out output --name score`
-   Writes `score.md`, `score.ly`, `score_full_band.mid` (a 7-track Logic Pro-ready arrangement with Melody Guide, Guitar Reference, Keyboards, Electric Bass, Horn Section, String Ensemble, and Drums), and `score.pdf` if `lilypond` is installed. Without LilyPond, tell the user the `.ly` file is ready to compile (`lilypond score.ly`).
-6. Report the files and any warnings. If the user supplied prose or ASCII tab instead of JSON, convert it first and say what you had to change to make it consistent.
 
-Run from this skill's folder (or add its `scripts/` directory to `PYTHONPATH`). Tests: `python -m unittest discover -s scripts/tests`.
+1. Read `references/schema.json`, `references/agent-prompt.md`, and the relevant checked shapes in `references/verified-voicings.md`.
+2. Determine whether the request is a **song/arrangement** or a **lesson plan**. A lesson plan is still encoded as a score JSON, but it can use section labels and teaching notes without inventing a song form.
+3. Create the JSON in the user's requested location. For a lesson, give it a descriptive title, add bar-level `section` headings, and explain the exercise in `notes`.
+4. Validate from the repository root:
 
-## Conventions
-- All pitches are sounding pitch (C4 = middle C); standard tuning E2 A2 D3 G3 B3 E4, low to high. The staff is engraved with a `treble_8` clef, so written notes appear an octave above sounding pitch. Never store written pitch.
-- Strings: 1 = high e ... 6 = low E. `voicing` arrays go low E -> high e; -1 muted, 0 open.
-- `tab` is the source of truth; `melody` must sound the same pitches (the validator checks).
-- A chord diagram appears at the event where `chord` is set and lasts until the next chord change; repeating the same chord adds no diagram unless `"show": true`.
-- `"play_chord": true` plays the whole voicing (chord-melody). Its `melody` must be the top note and `tab` is derived.
-- Bars must add up to the meter exactly. Durations: 1, 2, 4, 8, 16, dotted as `"4."`.
+   ```bash
+   PYTHONPATH=src python -m guitar_notation.cli check path/to/song.json
+   ```
 
-## Do not
-- Invent fingerings or chord names you have not checked against the notes.
-- Call a chord by a name the validator rejects. Fix the voicing or rename the chord.
-- Edit the generated `.ly` by hand; fix the JSON and re-render.
-- Silently drop melody notes to make a bar fit.
+5. Fix every error by correcting the music, not by removing required notes. Review warnings, especially chord names the validator could not verify.
+6. Render from the repository root:
 
-## Layout notes
-Chord diagrams live in a separate invisible voice timed from the music, so each sits above its beat. If diagrams crowd each other, set `"layout": {"bars_per_line": 2}` in the JSON. Output was designed for LilyPond 2.24.
+   ```bash
+   PYTHONPATH=src python -m guitar_notation.cli render path/to/song.json --out output --name score
+   ```
 
-## Musical style & vibe
-- Every song should evoke a **lo-fi, mellow, soft jazz / flamenco / warm 1960s tube amp & vinyl** aesthetic:
-  - Favor extended and colorful voicings (`Em9`, `Cmaj7#11`, `Am9`, `B7b13`, `Fmaj7`, `Dm9`, `E7b9`, Andalusian cadences, and smooth voice-leading) over basic open power chords.
-  - Keep melodies lyrical, expressive, and unhurried with space to breathe.
-  - Include style keywords in `notes` (e.g., `"Lo-fi soft jazz / flamenco groove, warm 60s tube vibe"`) so the MIDI arranger selects the matching Mellotron flute, upright bass, brushed drums, and muted brass palette.
-- Rendering automatically clears previous `.md`, `.ly`, `.pdf`, and `.mid` files in `--out` before writing the new score and 7-track MIDI file.
+   This creates `score.md`, `score.ly`, and `score_full_band.mid`. It also creates `score.pdf` if LilyPond is installed. Use `--no-pdf` if LilyPond is unavailable. Use `--no-midi` only when MIDI was not requested.
+7. Report the generated paths, validation result, and warnings. If rendering fails, keep working through the error rather than claiming the files were created.
+
+The command `guitar-notation` can be used instead of `PYTHONPATH=src python -m guitar_notation.cli` when the project is installed in the active Python environment. Tests use `pytest` from the repository root.
+
+## Input and notation rules
+
+- Pitches are sounding scientific notation (C4 = middle C). Standard tuning is `E2 A2 D3 G3 B3 E4`, low string to high string.
+- Tab strings number 1 (high e) through 6 (low E); chord voicings list low E to high e. `-1` is muted and `0` is open.
+- Ordinary melody and tab notes must sound the same. Melody-only events may omit tab; the renderer finds a playable position.
+- `play_chord: true` makes the guitar track and tablature play the complete chord voicing. An optional `melody` on that event is an independent guide line and can differ from the voicing's top note. Omit `tab` on these events.
+- Durations are `1`, `2`, `4`, `8`, or `16`, optionally dotted as a string (for example `"4."`). Every bar must add up to its meter.
+- A chord diagram appears when a chord is introduced or changes. Repeating the same chord does not add another diagram unless its `show` property is true.
+- The validator checks structure, pitch syntax, fret/string bounds, bar lengths, chord tones, and applicable melody/tab consistency. It does not guarantee playability of every fingering or musical quality.
+
+## Lesson-plan guidance
+
+- Put section titles in a bar's `section` property. The Markdown renderer displays each section once when it begins.
+- Use chord voicings to show the exact shell or extension being taught. If the guide melody should target the third on beat 1 while the guitar plays a shell, put that target in `melody` on a `play_chord` event.
+- Model chromatic passing chords as short, explicit chord events, and make the remaining event durations fill the measure exactly.
+- Keep explanatory instructions in `notes`. The MIDI has seven tracks—melody guide, guitar, keys, bass, horns, strings, and drums—but it does not contain spoken directions or teaching annotations.
+- Put requested style and instrument cues in `notes` or the title. Lo-fi/60s wording selects a palette with warm Rhodes keys and Mellotron flute; the arranger chooses from fixed palettes rather than honoring arbitrary instrument requests.
+- The MIDI accompaniment is generated by a style and meter heuristic. Treat it as practice backing, listen to it, and inspect the score before relying on it for a lesson.
+
+For a complete example, see `references/example_lesson_plan.json`. Rendering clears existing `.md`, `.ly`, `.pdf`, and `.mid` files from the selected output directory first; use a dedicated output folder.

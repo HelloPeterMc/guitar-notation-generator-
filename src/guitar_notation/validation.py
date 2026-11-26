@@ -56,7 +56,7 @@ def parse_duration(d):
 
 
 def parse_meter(meter):
-    m = re.match(r"^(\d+)/(1|2|4|8|16)$", meter) if isinstance(meter, str) else None
+    m = re.match(r"^([1-9]\d*)/(1|2|4|8|16)$", meter) if isinstance(meter, str) else None
     if not m or int(m.group(1)) == 0:
         raise ValueError(f"meter must look like 4/4, 3/4 or 6/8; got {meter!r}")
     n, d = int(m.group(1)), int(m.group(2))
@@ -275,6 +275,8 @@ def _check_event(song, tuning_ok, where, ev):
         if not isinstance(c, dict) or not isinstance(c.get("name"), str) or not c["name"].strip():
             errors.append(f"{where}: chord needs a 'name' string and a 'voicing' list")
         else:
+            if "show" in c and not isinstance(c["show"], bool):
+                errors.append(f"{where}: chord show must be true or false")
             v = c.get("voicing")
             if not isinstance(v, list) or len(v) != 6 or any(not _is_int(x) or x < -1 or x > 24 for x in v):
                 errors.append(f"{where}: chord '{c['name']}' voicing must be six values, low E to high e "
@@ -309,10 +311,10 @@ def _check_event(song, tuning_ok, where, ev):
             errors.append(f"{where}: play_chord needs a valid chord voicing")
         if tab:
             errors.append(f"{where}: play_chord takes its tab from the voicing; remove 'tab'")
-        elif chord_ok and tuning and melody_midis:
-            if len(melody_midis) != 1 or melody_midis[0] != voicing_midis[-1]:
-                errors.append(f"{where}: melody {mel} must be the single top note of the voicing "
-                              f"({note_name(voicing_midis[-1])})")
+        elif tuning and melody_midis:
+            for m in melody_midis:
+                if auto_position(tuning, m) is None:
+                    errors.append(f"{where}: {note_name(m)} cannot be played in this tuning (frets 0-24)")
     elif tuning:
         if melody_midis and tab_midis and sorted(melody_midis) != sorted(tab_midis):
             errors.append(f"{where}: melody sounds {_names(sorted(melody_midis))} but tab sounds "
@@ -337,6 +339,9 @@ def check_song(song):
 
     if not isinstance(song["title"], str) or not song["title"].strip():
         errors.append("title must be a non-empty string")
+    for field in ("composer", "key", "notes"):
+        if field in song and not isinstance(song[field], str):
+            errors.append(f"{field} must be a string")
     if not _is_int(song["tempo"]) or song["tempo"] <= 0:
         errors.append("tempo must be a positive integer")
     bar_len = None
@@ -367,6 +372,12 @@ def check_song(song):
         errors.append('key_signature must look like "E minor" or "Bb major"')
     if song.get("accidentals") not in (None, "sharps", "flats"):
         errors.append('accidentals must be "sharps" or "flats"')
+    if "layout" in song:
+        layout = song["layout"]
+        if not isinstance(layout, dict):
+            errors.append("layout must be an object")
+        elif "bars_per_line" in layout and (not _is_int(layout["bars_per_line"]) or layout["bars_per_line"] < 1):
+            errors.append("layout bars_per_line must be a positive integer")
 
     bars = song["bars"]
     if not isinstance(bars, list) or not bars:
@@ -375,6 +386,8 @@ def check_song(song):
         if not isinstance(bar, dict) or not isinstance(bar.get("events"), list) or not bar["events"]:
             errors.append(f"Bar {bi}: needs a non-empty 'events' list")
             continue
+        if "section" in bar and (not isinstance(bar["section"], str) or not bar["section"].strip()):
+            errors.append(f"Bar {bi}: section must be a non-empty string when supplied")
         total, durations_ok = Fraction(0), True
         for ei, ev in enumerate(bar["events"], 1):
             e, w, val = _check_event(song, tuning_ok, f"Bar {bi}, event {ei}", ev)

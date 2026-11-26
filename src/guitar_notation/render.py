@@ -154,16 +154,22 @@ def render_markdown(song, warnings=()):
                 prev = _chord_key(c)
 
     out += ["## Bars", ""]
+    previous_section = None
     for bi, bar in enumerate(song["bars"], 1):
-        out += [f"### Bar {bi}", "", "| Beat | Chord | Notes | Tab (string/fret) |", "|---|---|---|---|"]
+        section = bar.get("section")
+        if section and section != previous_section:
+            out += [f"### {section}", ""]
+            previous_section = section
+        out += [f"#### Bar {bi}", "", "| Beat | Chord | Notes | Melody | Tab (string/fret) |", "|---|---|---|---|---|"]
         offset = Fraction(0)
         for ev in bar["events"]:
             notes = resolve_event(song, ev)
             beat = f"{float(offset * d + 1):g}"
             chord = ev["chord"]["name"] if ev.get("chord") else ""
             names = " ".join(n["name"] for n in notes) or "rest"
+            melody = " ".join(ev.get("melody", []))
             tabs = " ".join(f"{n['string']}/{n['fret']}" for n in notes) or "-"
-            out.append(f"| {beat} | {chord} | {names} | {tabs} |")
+            out.append(f"| {beat} | {chord} | {names} | {melody} | {tabs} |")
             offset += parse_duration(ev["duration"])[1]
         out += ["", "```text", tab_ascii(song, bar, marks_by_event), "```", ""]
     return "\n".join(out)
@@ -211,8 +217,11 @@ def _split_melody_and_chords(song, ev):
         melody_notes = [n for n in full_notes if n["midi"] in mel_midis]
         if not melody_notes:
             flats = use_flats(song)
-            melody_notes = [{"midi": m, "name": note_name(m, flats), "string": 1, "fret": 0}
-                            for m in sorted(mel_midis)]
+            melody_notes = []
+            for m in sorted(mel_midis):
+                pos = auto_position(song["tuning"], m)
+                melody_notes.append({"midi": m, "name": note_name(m, flats),
+                                    "string": pos["string"], "fret": pos["fret"]})
     elif ev.get("play_chord") or len(full_notes) > 1:
         # In chord-melody events without explicit melody, top voice goes to Melody staff
         melody_notes = [full_notes[-1]]

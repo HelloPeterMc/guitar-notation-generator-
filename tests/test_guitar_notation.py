@@ -1,20 +1,19 @@
 import json
 import re
-import sys
 import unittest
 from copy import deepcopy
 from fractions import Fraction
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "scripts"))
+ROOT = Path(__file__).resolve().parents[1]
 
 from guitar_notation.render import chord_changes, render_lilypond, render_markdown  # noqa: E402
 from guitar_notation.midi_arranger import render_midi_bytes  # noqa: E402
 from guitar_notation.validation import auto_position, check_song, chord_spec, analyze_chord, midi_note  # noqa: E402
 
 EXAMPLE = json.loads((ROOT / "references" / "example.json").read_text(encoding="utf-8"))
-BAD = json.loads((Path(__file__).parent / "fixtures" / "montmartre_original_bad.json").read_text(encoding="utf-8"))
+LESSON = json.loads((ROOT / "references" / "example_lesson_plan.json").read_text(encoding="utf-8"))
+BAD = json.loads((ROOT / "tests" / "fixtures" / "montmartre_original_bad.json").read_text(encoding="utf-8"))
 TUNING = ["E2", "A2", "D3", "G3", "B3", "E4"]
 
 
@@ -30,6 +29,11 @@ def chord_errors(name, voicing):
 class ValidationTests(unittest.TestCase):
     def test_example_is_clean(self):
         errors, warnings = check_song(EXAMPLE)
+        self.assertEqual(errors, [])
+        self.assertEqual(warnings, [])
+
+    def test_lesson_plan_example_is_clean(self):
+        errors, warnings = check_song(LESSON)
         self.assertEqual(errors, [])
         self.assertEqual(warnings, [])
 
@@ -67,15 +71,35 @@ class ValidationTests(unittest.TestCase):
         song["bars"][0]["events"][2]["duration"] = 16
         self.assertEqual(check_song(song)[0], [])
 
-    def test_play_chord_melody_must_be_top_note(self):
+    def test_play_chord_supports_an_independent_melody_guide(self):
         song = deepcopy(EXAMPLE)
-        song["bars"][0]["events"][0]["melody"] = ["A4"]
-        self.assertTrue(any("top note" in e for e in check_song(song)[0]))
+        song["bars"][0]["events"][0]["melody"] = ["G3"]
+        self.assertEqual(check_song(song), ([], []))
+
+    def test_bar_sections_are_validated(self):
+        song = deepcopy(EXAMPLE)
+        song["bars"][0]["section"] = "Shell voicings"
+        self.assertEqual(check_song(song), ([], []))
+        song["bars"][0]["section"] = " "
+        self.assertTrue(any("section must be" in e for e in check_song(song)[0]))
 
     def test_bad_shapes_do_not_crash(self):
         for bad in ({}, [], {"title": "x", "tempo": 90, "meter": "4/4", "tuning": TUNING, "bars": [5]},
                     {"title": "x", "tempo": "fast", "meter": "4/4", "tuning": TUNING, "bars": [{"events": [1]}]}):
             self.assertTrue(check_song(bad)[0])
+
+    def test_optional_schema_fields_are_checked(self):
+        song = deepcopy(EXAMPLE)
+        song["layout"] = {"bars_per_line": True}
+        self.assertTrue(any("bars_per_line" in error for error in check_song(song)[0]))
+
+        song = deepcopy(EXAMPLE)
+        song["composer"] = 4
+        self.assertTrue(any("composer must be a string" in error for error in check_song(song)[0]))
+
+        song = deepcopy(EXAMPLE)
+        song["bars"][0]["events"][0]["chord"]["show"] = "yes"
+        self.assertTrue(any("chord show must" in error for error in check_song(song)[0]))
 
     def test_auto_position(self):
         self.assertEqual(auto_position(TUNING, midi_note("E4")), {"string": 1, "fret": 0})
@@ -122,12 +146,33 @@ class RenderTests(unittest.TestCase):
         for name in ("Em7", "Fmaj7", "Dm7"):
             self.assertIn(name, md)
 
+    def test_markdown_shows_section_and_independent_melody(self):
+        song = deepcopy(EXAMPLE)
+        song["bars"][0]["section"] = "Shell voicings"
+        song["bars"][0]["events"][0]["melody"] = ["G3"]
+        md = render_markdown(song)
+        self.assertIn("### Shell voicings", md)
+        self.assertIn("| G3 |", md)
+
+    def test_lesson_plan_renders_sections_and_melody_targets(self):
+        md = render_markdown(LESSON)
+        self.assertIn("### 1. Shell voicings", md)
+        self.assertIn("### 2. Ninth and thirteenth colors", md)
+        self.assertIn("| F3 |", md)
+
 
 class MidiTests(unittest.TestCase):
     def test_midi_renders_with_unnamed_conductor_track(self):
         midi = render_midi_bytes(EXAMPLE)
         self.assertEqual(midi[:4], b"MThd")
-        self.assertEqual(int.from_bytes(midi[10:12], "big"), 8)
+        self.assertEqual(int.from_bytes(midi[10:12], "big"), 7)
+
+    def test_lesson_midi_uses_explicit_independent_melody(self):
+        midi = render_midi_bytes(LESSON)
+        self.assertEqual(int.from_bytes(midi[10:12], "big"), 7)
+        # The first melody guide note is F3 (MIDI 53), the third of Dm7.
+        self.assertIn(b"\x90\x35", midi)
+        self.assertIn(b"60s Warm Rhodes", midi)
 
 
 if __name__ == "__main__":

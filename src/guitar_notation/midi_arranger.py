@@ -10,7 +10,7 @@ from fractions import Fraction
 from pathlib import Path
 
 from .render import resolve_event
-from .validation import parse_duration, parse_meter, voicing_notes
+from .validation import midi_note, parse_duration, parse_meter, voicing_notes
 
 PPQ = 480
 
@@ -29,7 +29,7 @@ VIBE_PALETTES = {
     "lofi_60s_soul": {
         "melody": ("Mellotron Flute", 0, 73, 58, 72),
         "guitar": ("60s Hollowbody Jazz", 1, 26, 50, 62),
-        "keys": ("Vintage Vibraphone", 2, 11, 52, 60),
+        "keys": ("60s Warm Rhodes", 2, 4, 50, 58),
         "bass": ("Warm Tube Fretless", 3, 35, 62, 74),
         "horns": ("Soft Flugelhorn", 4, 60, 48, 60),
         "strings": ("Mellotron Strings", 5, 49, 44, 50),
@@ -60,7 +60,7 @@ def _detect_vibe(song: dict) -> str:
         return "flamenco_jazz"
     if any(w in blob for w in ("bossa", "montmartre", "latin", "samba", "waltz", "paris")):
         return "mellow_bossa_lofi"
-    if tempo <= 88 or any(w in blob for w in ("soul", "60s", "vinyl", "lofi", "lo-fi", "chill", "tube")):
+    if tempo <= 88 or any(w in blob for w in ("soul", "60s", "vinyl", "lofi", "lo-fi", "chill", "tube", "rhodes")):
         return "lofi_60s_soul"
     return "mellow_bossa_lofi"
 
@@ -207,15 +207,16 @@ def render_midi_bytes(song: dict) -> bytes:
             if resolved:
                 human_shift = rng.randint(-8, 12)
                 mel_vel = palette["melody"][4] + rng.randint(-5, 5)
-                top_note = resolved[-1]["midi"]
-                _add_note(
-                    melody_ev,
-                    palette["melody"][1],
-                    top_note,
-                    max(0, cursor + human_shift),
-                    cursor + int(dur_ticks * 0.92),
-                    vel=mel_vel,
-                )
+                guide_notes = [midi_note(note) for note in ev["melody"]] if ev.get("melody") else [resolved[-1]["midi"]]
+                for guide_note in guide_notes:
+                    _add_note(
+                        melody_ev,
+                        palette["melody"][1],
+                        guide_note,
+                        max(0, cursor + human_shift),
+                        cursor + int(dur_ticks * 0.92),
+                        vel=mel_vel,
+                    )
 
                 gtr_base_vel = palette["guitar"][4]
                 for idx, n in enumerate(resolved):

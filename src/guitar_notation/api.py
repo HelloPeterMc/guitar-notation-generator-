@@ -3,7 +3,7 @@ from pathlib import Path
 from fastapi import FastAPI,HTTPException
 from .validation import validate_song
 from .render import write_outputs
-app=FastAPI(title="Guitar Notation Generator",version="0.1.0")
+app=FastAPI(title="Guitar Notation Generator",version="0.2.0")
 @app.post("/validate")
 def validate(payload:dict):
     errors=validate_song(payload)
