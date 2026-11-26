@@ -1,6 +1,6 @@
 # Guitar Notation Generator
 
-Local-first Python application for validating guitar music and producing a readable lead sheet, tablature, chord diagrams, and a practice-band MIDI arrangement. The same package powers the command line, optional local HTTP API, and the repository's Copilot agent skill.
+Local-first Python application for validating guitar music and producing a readable lead sheet, tablature, chord diagrams, and a practice-band MIDI arrangement. The command line and repository's Copilot agent skill use the same package.
 
 ## Current version and capabilities
 
@@ -10,7 +10,6 @@ Current application version: **0.2.0**.
 - Render agent-friendly Markdown and LilyPond source containing melody, chord, and tablature staves plus timed chord diagrams.
 - Generate a seven-track Type 1 MIDI arrangement: melody guide, guitar, keys, bass, horns, strings, and drums.
 - Compile a PDF when LilyPond 2.24 or later is installed.
-- Use the same backend from the CLI or optional FastAPI service.
 
 The musical input is intentionally event-based. It does not model every possible engraving or performance detail; review the generated score and MIDI before using them as final teaching or publication material.
 
@@ -18,7 +17,6 @@ The musical input is intentionally event-based. It does not model every possible
 
 - Python 3.10 or later
 - LilyPond 2.24 or later for PDF output
-- FastAPI and Uvicorn only if using the HTTP API
 
 ## Install
 
@@ -30,7 +28,7 @@ source .venv/bin/activate
 python -m pip install -e ".[dev]"
 ```
 
-The core CLI has no third-party Python runtime dependencies. Install LilyPond separately from [lilypond.org](https://lilypond.org/download.html). To use the HTTP API, install its optional dependencies with `python -m pip install -e ".[api]"`.
+The core CLI has no third-party Python runtime dependencies. Install LilyPond separately from [lilypond.org](https://lilypond.org/download.html).
 
 ## Use the command line
 
@@ -75,20 +73,6 @@ Supported meters use denominators 1, 2, 4, 8, or 16. The MIDI arranger adapts to
 
 The repository includes [`.github/skills/guitar-notation/SKILL.md`](.github/skills/guitar-notation/SKILL.md). It instructs a compatible agent to produce JSON, validate it, correct errors, then render the PDF and MIDI. The skill calls the same `src/guitar_notation` package as the CLI; there is no second implementation to keep synchronized. See [`references/agent-prompt.md`](references/agent-prompt.md) for a reusable prompt and [`references/verified-voicings.md`](references/verified-voicings.md) for checked chord shapes.
 
-## Optional local HTTP API
-
-Install the API extra, then start the service on loopback:
-
-```bash
-python -m pip install -e ".[api]"
-uvicorn guitar_notation.api:app --host 127.0.0.1 --port 8000
-```
-
-- `POST /validate` accepts the song JSON and returns a validity flag and validation errors.
-- `POST /render` accepts valid JSON and returns local paths to the generated Markdown, LilyPond, and MIDI files. PDF compilation remains a CLI step.
-
-The API and CLI use the same validation and rendering functions. The API is optional and is not required for the Copilot skill or command-line workflow.
-
 ## Tests
 
 ```bash
@@ -104,4 +88,4 @@ The tests load the source package from `src/` and the examples from `references/
 - Events provide a single duration and simultaneous pitch collections. Fine-grained rhythms, ties, tuplets, pickups, articulations, and independent rhythmic alignment among voices are not modeled.
 - Validation checks chord-name/voicing pitch classes and slash bass, but cannot determine musical intent, ergonomic fingering, voice-leading quality, or every possible chord spelling.
 - The schema describes structural constraints; the Python validator remains authoritative for additional musical checks.
-- A local web editor is not included. The HTTP API provides a possible backend for one.
+- There is no web UI or HTTP API; use the CLI directly or through the Copilot agent skill.
