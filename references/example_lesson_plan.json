@@ -7,7 +7,7 @@
   "meter": "6/8",
   "pitch_convention": "sounding",
   "tuning": ["E2", "A2", "D3", "G3", "B3", "E4"],
-  "notes": "Lesson exercise, not a song. Section 1 practices root, third, and seventh shells with roots on both the sixth and fifth strings. Section 2 adds ninth and thirteenth colors. The guide melody targets each chord's third on beat 1. A D#dim7 shape is a chromatic approach from Dm7 to G7. MIDI backing is algorithmic; use the guitar track to practice the written voicings.",
+  "notes": "Lesson exercise, not a song. Section 1 practices root, third, and seventh shells with roots on both the sixth and fifth strings. Section 2 adds ninth and thirteenth colors. The guide melody targets each chord's third on beat 1. A D#dim7 shape is a chromatic approach from Dm7 to G7. MIDI backing is algorithmic; use track 2 to practice the written chord voicings.",
   "bars": [
     {
       "section": "1. Shell voicings",

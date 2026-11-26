@@ -1,8 +1,7 @@
-"""Vibe-aware Lo-Fi / 60s Tube / Soft Jazz & Flamenco MIDI Arranger (-12dB Headroom).
+"""Vibe-aware MIDI arranger for Logic Pro and other DAWs.
 
-Generates a 7-track Logic Pro-ready Type 1 MIDI file calibrated with low channel
-gain (CC 7) and soft dynamics so Stereo Out maintains ~-12 dB of headroom for
-live acoustic guitar tracking.
+Generates an 8-track Type 1 MIDI file with separate guitar melody and chord tracks,
+plus Mellotron guide, keys, bass, horns, strings, and drums.
 """
 import random
 import struct
@@ -18,30 +17,30 @@ PPQ = 480
 # Tuple format: (track_label, midi_channel, gm_program, cc7_volume, base_velocity)
 VIBE_PALETTES = {
     "flamenco_jazz": {
-        "melody": ("Mellotron Flute", 0, 73, 58, 72),
-        "guitar": ("Flamenco Nylon", 1, 24, 52, 64),
-        "keys": ("60s Warm Rhodes", 2, 4, 50, 58),
-        "bass": ("Upright Acoustic Bass", 3, 32, 62, 74),
-        "horns": ("Muted Jazz Trumpet", 4, 59, 48, 60),
-        "strings": ("Warm Tape Strings", 5, 49, 44, 52),
+        "melody": ("Mellotron Flute", 2, 73, 58, 72),
+        "guitar": ("Classical Acoustic Guitar Chords", 1, 24, 52, 64),
+        "keys": ("60s Warm Rhodes", 3, 4, 50, 58),
+        "bass": ("Upright Acoustic Bass", 4, 32, 62, 74),
+        "horns": ("Muted Jazz Trumpet", 5, 59, 48, 60),
+        "strings": ("Warm Tape Strings", 6, 49, 44, 52),
         "drums": ("Lo-Fi Brush Kit", 9, None, 56, 66),
     },
     "lofi_60s_soul": {
-        "melody": ("Mellotron Flute", 0, 73, 58, 72),
-        "guitar": ("60s Hollowbody Jazz", 1, 26, 50, 62),
-        "keys": ("60s Warm Rhodes", 2, 4, 50, 58),
-        "bass": ("Warm Tube Fretless", 3, 35, 62, 74),
-        "horns": ("Soft Flugelhorn", 4, 60, 48, 60),
-        "strings": ("Mellotron Strings", 5, 49, 44, 50),
+        "melody": ("Mellotron Flute", 2, 73, 58, 72),
+        "guitar": ("Classical Acoustic Guitar Chords", 1, 24, 50, 62),
+        "keys": ("60s Warm Rhodes", 3, 4, 50, 58),
+        "bass": ("Warm Tube Fretless", 4, 35, 62, 74),
+        "horns": ("Soft Flugelhorn", 5, 60, 48, 60),
+        "strings": ("Mellotron Strings", 6, 49, 44, 50),
         "drums": ("Vintage 60s Kit", 9, None, 55, 65),
     },
     "mellow_bossa_lofi": {
-        "melody": ("Mellotron Flute", 0, 73, 58, 72),
-        "guitar": ("Nylon Bossa Guitar", 1, 24, 52, 64),
-        "keys": ("Soft Wurlitzer EP", 2, 5, 50, 58),
-        "bass": ("Upright Acoustic Bass", 3, 32, 62, 74),
-        "horns": ("Warm Tenor Sax", 4, 66, 48, 58),
-        "strings": ("Warm Tape Strings", 5, 49, 44, 50),
+        "melody": ("Mellotron Flute", 2, 73, 58, 72),
+        "guitar": ("Classical Acoustic Guitar Chords", 1, 24, 52, 64),
+        "keys": ("Soft Wurlitzer EP", 3, 5, 50, 58),
+        "bass": ("Upright Acoustic Bass", 4, 32, 62, 74),
+        "horns": ("Warm Tenor Sax", 5, 66, 48, 58),
+        "strings": ("Warm Tape Strings", 6, 49, 44, 52),
         "drums": ("Lo-Fi Rimshot Kit", 9, None, 55, 64),
     },
 }
@@ -173,8 +172,9 @@ def render_midi_bytes(song: dict) -> bytes:
         (0, bytes([0xFF, 0x58, 0x04, num, den_pow, 24, 8])),
     ]
 
+    guitar_melody_ev: list[tuple[int, bytes]] = []
+    guitar_chords_ev: list[tuple[int, bytes]] = []
     melody_ev: list[tuple[int, bytes]] = []
-    guitar_ev: list[tuple[int, bytes]] = []
     keys_ev: list[tuple[int, bytes]] = []
     bass_ev: list[tuple[int, bytes]] = []
     horns_ev: list[tuple[int, bytes]] = []
@@ -187,11 +187,18 @@ def render_midi_bytes(song: dict) -> bytes:
     eighth_ticks = PPQ // 2
 
     chord_spans: list[tuple[int, int, list[int]]] = []
+    chord_hits: list[tuple[int, list[int]]] = []
     active_chord: list[int] | None = None
+    active_chord_signature = None
     active_start = 0
     cursor = 0
 
     for bar in song["bars"]:
+        bar_start = cursor
+        first_event_has_chord = bool(bar["events"][0].get("chord"))
+        if active_chord is not None and not first_event_has_chord:
+            chord_hits.append((bar_start, active_chord))
+
         for ev in bar["events"]:
             _, dur_frac = parse_duration(ev["duration"])
             dur_ticks = int(round(whole_ticks * dur_frac))
@@ -199,9 +206,14 @@ def render_midi_bytes(song: dict) -> bytes:
 
             if ev.get("chord"):
                 new_pitches = _chord_pitches(song, ev["chord"])
+                new_signature = (ev["chord"].get("name"), tuple(ev["chord"]["voicing"]))
+                changed = new_signature != active_chord_signature
+                if cursor == bar_start or changed:
+                    chord_hits.append((cursor, new_pitches))
                 if active_chord is not None and cursor > active_start:
                     chord_spans.append((active_start, cursor, active_chord))
                 active_chord = new_pitches
+                active_chord_signature = new_signature
                 active_start = cursor
 
             if resolved:
@@ -209,32 +221,40 @@ def render_midi_bytes(song: dict) -> bytes:
                 mel_vel = palette["melody"][4] + rng.randint(-5, 5)
                 guide_notes = [midi_note(note) for note in ev["melody"]] if ev.get("melody") else [resolved[-1]["midi"]]
                 for guide_note in guide_notes:
-                    _add_note(
-                        melody_ev,
-                        palette["melody"][1],
-                        guide_note,
-                        max(0, cursor + human_shift),
-                        cursor + int(dur_ticks * 0.92),
-                        vel=mel_vel,
-                    )
-
-                gtr_base_vel = palette["guitar"][4]
-                for idx, n in enumerate(resolved):
-                    strum_offset = idx * 24 if len(resolved) > 1 else 0
-                    _add_note(
-                        guitar_ev,
-                        palette["guitar"][1],
-                        n["midi"],
-                        cursor + strum_offset,
-                        cursor + int(dur_ticks * 0.94),
-                        vel=gtr_base_vel + rng.randint(-4, 4),
-                    )
+                    for target, channel, velocity in (
+                        (guitar_melody_ev, 0, max(1, mel_vel - 5)),
+                        (melody_ev, palette["melody"][1], mel_vel),
+                    ):
+                        _add_note(
+                            target,
+                            channel,
+                            guide_note,
+                            max(0, cursor + human_shift),
+                            cursor + int(dur_ticks * 0.92),
+                            vel=velocity,
+                        )
 
             cursor += dur_ticks
 
     total_ticks = cursor
     if active_chord is not None and total_ticks > active_start:
         chord_spans.append((active_start, total_ticks, active_chord))
+
+    # Strum one short chord hit at each bar downbeat and each actual chord change.
+    chord_hits.sort(key=lambda hit: hit[0])
+    for i, (start, pitches) in enumerate(chord_hits):
+        next_start = chord_hits[i + 1][0] if i + 1 < len(chord_hits) else total_ticks
+        strum_span = max(0, len(pitches) - 1) * 12
+        hit_length = max(40, int((next_start - start) * 0.9) - strum_span)
+        for string_index, pitch in enumerate(pitches):
+            _add_note(
+                guitar_chords_ev,
+                1,
+                pitch,
+                start + string_index * 12,
+                start + string_index * 12 + hit_length,
+                vel=palette["guitar"][4] + rng.randint(-4, 4),
+            )
 
     is_compound_8 = (den == 8 and num in (6, 9, 12))
     pulse_ticks = (quarter_ticks + eighth_ticks) if is_compound_8 else quarter_ticks
@@ -253,18 +273,18 @@ def render_midi_bytes(song: dict) -> bytes:
         third = (pitches[1] - 12) if len(pitches) > 1 and (pitches[1] - 12) >= 28 else root
         upper = [p + 12 if p < 48 else p for p in pitches]
 
-        # Track 6: Warm Tape Strings (sustained pad across any meter)
+        # Track 7: Warm Tape Strings (sustained pad across any meter)
         str_ch, _, _, str_vel = palette["strings"][1:]
         for p in upper:
             _add_note(strings_ev, str_ch, p, start + 15, end - 25, vel=str_vel)
 
-        # Track 5: Muted Jazz Horns (warm swell scaled to the meter's pulse)
+        # Track 6: Muted Jazz Horns (warm swell scaled to the meter's pulse)
         horn_ch, _, _, horn_vel = palette["horns"][1:]
         stab_len = min(int(pulse_ticks * 1.35), end - start - 15)
         for p in upper[-3:]:
             _add_note(horns_ev, horn_ch, p, start + 10, start + stab_len, vel=horn_vel + rng.randint(-3, 3))
 
-        # Track 3: Keys (adapts to 3/4 waltz, 6/8 compound, or odd/4/4 meters)
+        # Track 4: Keys (adapts to 3/4, compound, or odd meters)
         keys_ch, _, _, keys_vel = palette["keys"][1:]
         t = start
         pulse_i = 0
@@ -284,7 +304,7 @@ def render_midi_bytes(song: dict) -> bytes:
             t += pulse_ticks
             pulse_i += 1
 
-        # Track 4: Upright / Fretless Bass (follows bar downbeats & meter accents)
+        # Track 5: Upright / Fretless Bass (follows bar downbeats & meter accents)
         bass_ch, _, _, bass_vel = palette["bass"][1:]
         t = start
         while t < end:
@@ -302,7 +322,7 @@ def render_midi_bytes(song: dict) -> bytes:
             _add_note(bass_ev, bass_ch, b_note, t + rng.randint(-6, 8), t + step, vel=bass_vel + rng.randint(-4, 4))
             t += pulse_ticks
 
-    # Track 7: Meter-Aware Lo-Fi Brush / Rimshot Groove
+    # Track 8: Meter-Aware Lo-Fi Brush / Rimshot Groove
     drum_ch, _, _, drum_vel = palette["drums"][1:]
     t = 0
     while t < total_ticks:
@@ -358,13 +378,15 @@ def render_midi_bytes(song: dict) -> bytes:
 
         t += sub_ticks
 
-    # Prepend Tempo & Time Signature meta-events onto Track 1 so Logic Pro does not
+    # Prepend Tempo & Time Signature meta-events onto Track 3 so Logic Pro does not
     # create an empty Track 0 channel strip on import
     melody_with_conductor = conductor + melody_ev
 
+    guitar_melody_track = ("Classical Acoustic Guitar Melody", 0, 24, 54, 68)
     tracks = [
+        _build_track(*guitar_melody_track[:4], guitar_melody_ev, add_tape_wobble=False),
+        _build_track(*palette["guitar"][:4], guitar_chords_ev, add_tape_wobble=False),
         _build_track(*palette["melody"][:4], melody_with_conductor, add_tape_wobble=True),
-        _build_track(*palette["guitar"][:4], guitar_ev, add_tape_wobble=False),
         _build_track(*palette["keys"][:4], keys_ev, add_tape_wobble=True),
         _build_track(*palette["bass"][:4], bass_ev, add_tape_wobble=False),
         _build_track(*palette["horns"][:4], horns_ev, add_tape_wobble=False),

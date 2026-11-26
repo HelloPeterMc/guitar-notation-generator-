@@ -33,7 +33,7 @@ def main(argv=None):
     c = sub.add_parser("check", help="validate only; print errors and warnings")
     c.add_argument("song")
     r = sub.add_parser("render", help="validate, then write .md and .ly and compile a PDF")
-    r.add_argument("--no-midi", dest="no_midi", action="store_true", help="skip generating the 7-track backing MIDI file")
+    r.add_argument("--no-midi", dest="no_midi", action="store_true", help="skip generating the 8-track backing MIDI file")
     r.add_argument("song")
     r.add_argument("--out", default="output")
     r.add_argument("--name", default="score")

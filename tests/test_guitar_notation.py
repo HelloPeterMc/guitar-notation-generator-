@@ -17,6 +17,50 @@ BAD = json.loads((ROOT / "tests" / "fixtures" / "montmartre_original_bad.json").
 TUNING = ["E2", "A2", "D3", "G3", "B3", "E4"]
 
 
+def midi_tracks(midi):
+    count = int.from_bytes(midi[10:12], "big")
+    offset = 14
+    tracks = []
+    for _ in range(count):
+        assert midi[offset:offset + 4] == b"MTrk"
+        length = int.from_bytes(midi[offset + 4:offset + 8], "big")
+        tracks.append(midi[offset + 8:offset + 8 + length])
+        offset += 8 + length
+    return tracks
+
+
+def read_vlq(data, offset):
+    value = 0
+    while True:
+        byte = data[offset]
+        offset += 1
+        value = (value << 7) | (byte & 0x7F)
+        if byte < 0x80:
+            return value, offset
+
+
+def note_ons(track):
+    events, offset, tick = [], 0, 0
+    while offset < len(track):
+        delta, offset = read_vlq(track, offset)
+        tick += delta
+        status = track[offset]
+        offset += 1
+        if status == 0xFF:
+            meta_type = track[offset]
+            length, offset = read_vlq(track, offset + 1)
+            offset += length
+            if meta_type == 0x2F:
+                break
+            continue
+        size = 1 if status & 0xF0 in (0xC0, 0xD0) else 2
+        values = track[offset:offset + size]
+        offset += size
+        if status & 0xF0 == 0x90 and len(values) == 2 and values[1] > 0:
+            events.append((tick, status & 0x0F, values[0]))
+    return events
+
+
 def chord_errors(name, voicing):
     """Errors for a chord; also fails the test if the name could not be parsed at all."""
     song = deepcopy(EXAMPLE)
@@ -162,14 +206,62 @@ class RenderTests(unittest.TestCase):
 
 
 class MidiTests(unittest.TestCase):
-    def test_midi_renders_with_unnamed_conductor_track(self):
+    def test_midi_has_eight_ordered_tracks(self):
         midi = render_midi_bytes(EXAMPLE)
         self.assertEqual(midi[:4], b"MThd")
-        self.assertEqual(int.from_bytes(midi[10:12], "big"), 7)
+        tracks = midi_tracks(midi)
+        self.assertEqual(len(tracks), 8)
+        names = [
+            b"Classical Acoustic Guitar Melody",
+            b"Classical Acoustic Guitar Chords",
+            b"Mellotron Flute",
+            b"60s Warm Rhodes",
+            b"Upright Acoustic Bass",
+            b"Muted Jazz Trumpet",
+            b"Warm Tape Strings",
+            b"Lo-Fi Brush Kit",
+        ]
+        for track, name in zip(tracks, names):
+            self.assertIn(name, track)
+
+    def test_melody_guitar_and_mellotron_are_melody_only(self):
+        tracks = midi_tracks(render_midi_bytes(LESSON))
+        guitar_melody = note_ons(tracks[0])
+        mellotron = note_ons(tracks[2])
+        guitar_chords = note_ons(tracks[1])
+        self.assertTrue(guitar_melody)
+        self.assertEqual([(t, p) for t, _, p in guitar_melody],
+                         [(t, p) for t, _, p in mellotron])
+        self.assertIn((0, 1, 50), guitar_chords)
+        self.assertIn((12, 1, 53), guitar_chords)
+
+    def test_chord_track_hits_downbeats_and_each_change(self):
+        song = deepcopy(EXAMPLE)
+        song["bars"] = [
+            {"events": [
+                {"duration": 4, "chord": {"name": "Em7", "voicing": [0, 2, 0, 0, 0, 0]}},
+                {"duration": 4},
+                {"duration": 4, "chord": {"name": "Fmaj7", "voicing": [-1, -1, 3, 2, 1, 0]}},
+                {"duration": 4},
+            ]},
+            {"events": [
+                {"duration": 4, "chord": {"name": "Fmaj7", "voicing": [-1, -1, 3, 2, 1, 0]}},
+                {"duration": 4, "chord": {"name": "Em7", "voicing": [0, 2, 0, 0, 0, 0]}},
+                {"duration": 4, "chord": {"name": "G7", "voicing": [3, -1, 3, 4, -1, -1]}},
+                {"duration": 4, "chord": {"name": "Dm7", "voicing": [-1, -1, 0, 2, 1, 1]}},
+            ]},
+        ]
+        events = note_ons(midi_tracks(render_midi_bytes(song))[1])
+        ticks = sorted(tick for tick, channel, _ in events if channel == 1)
+        hit_starts = []
+        for tick in ticks:
+            if not hit_starts or tick - hit_starts[-1] > 60:
+                hit_starts.append(tick)
+        self.assertEqual(hit_starts, [0, 960, 1920, 2400, 2880, 3360])
 
     def test_lesson_midi_uses_explicit_independent_melody(self):
         midi = render_midi_bytes(LESSON)
-        self.assertEqual(int.from_bytes(midi[10:12], "big"), 7)
+        self.assertEqual(int.from_bytes(midi[10:12], "big"), 8)
         # The first melody guide note is F3 (MIDI 53), the third of Dm7.
         self.assertIn(b"\x90\x35", midi)
         self.assertIn(b"60s Warm Rhodes", midi)

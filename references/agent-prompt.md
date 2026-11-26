@@ -38,4 +38,4 @@ In either mode, output one JSON object following `references/schema.json`. Do no
 - Add every event duration in each bar and confirm it equals the meter.
 - Validate the JSON; fix musical errors rather than deleting data to make validation pass.
 
-The generated MIDI has seven tracks: melody guide, guitar, keys, bass, horns, strings, and drums. Its backing arrangement is algorithmic and intended for practice; listen to it and revise the JSON if its voicings or style do not suit the lesson.
+The generated MIDI has eight tracks: Classical Acoustic Guitar melody, Classical Acoustic Guitar chords, Mellotron Flute melody, keys, bass, horns, strings, and drums. Track 2 strums the active chord at every bar downbeat and every chord change. The other arrangement parts are algorithmic and intended for practice; listen to the MIDI and revise the JSON if its voicings or style do not suit the lesson.
