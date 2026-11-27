@@ -17,31 +17,31 @@ PPQ = 480
 # Tuple format: (track_label, midi_channel, gm_program, cc7_volume, base_velocity)
 VIBE_PALETTES = {
     "flamenco_jazz": {
-        "melody": ("Mellotron Flute", 2, 73, 58, 72),
-        "guitar": ("Classical Acoustic Guitar Chords", 1, 24, 52, 64),
-        "keys": ("60s Warm Rhodes", 3, 4, 50, 58),
-        "bass": ("Upright Acoustic Bass", 4, 32, 62, 74),
-        "horns": ("Muted Jazz Trumpet", 5, 59, 48, 60),
-        "strings": ("Warm Tape Strings", 6, 49, 44, 52),
-        "drums": ("Lo-Fi Brush Kit", 9, None, 56, 66),
+        "melody": ("Flute Import", 2, 73, 40, 64),
+        "guitar": ("Guitar Chords Import", 1, 24, 64, 74),
+        "keys": ("Keyboard Import", 3, 4, 64, 68),
+        "bass": ("Bass Import", 4, 32, 62, 74),
+        "horns": ("Horn Import", 5, 59, 48, 60),
+        "strings": ("Strings Import", 6, 49, 72, 64),
+        "drums": ("Drums Import", 9, None, 56, 66),
     },
     "lofi_60s_soul": {
-        "melody": ("Mellotron Flute", 2, 73, 58, 72),
-        "guitar": ("Classical Acoustic Guitar Chords", 1, 24, 50, 62),
-        "keys": ("60s Warm Rhodes", 3, 4, 50, 58),
-        "bass": ("Warm Tube Fretless", 4, 35, 62, 74),
-        "horns": ("Soft Flugelhorn", 5, 60, 48, 60),
-        "strings": ("Mellotron Strings", 6, 49, 44, 50),
-        "drums": ("Vintage 60s Kit", 9, None, 55, 65),
+        "melody": ("Flute Import", 2, 73, 40, 64),
+        "guitar": ("Guitar Chords Import", 1, 24, 64, 74),
+        "keys": ("Keyboard Import", 3, 4, 64, 68),
+        "bass": ("Bass Import", 4, 35, 62, 74),
+        "horns": ("Horn Import", 5, 60, 48, 60),
+        "strings": ("Strings Import", 6, 49, 72, 64),
+        "drums": ("Drums Import", 9, None, 55, 65),
     },
     "mellow_bossa_lofi": {
-        "melody": ("Mellotron Flute", 2, 73, 58, 72),
-        "guitar": ("Classical Acoustic Guitar Chords", 1, 24, 52, 64),
-        "keys": ("Soft Wurlitzer EP", 3, 5, 50, 58),
-        "bass": ("Upright Acoustic Bass", 4, 32, 62, 74),
-        "horns": ("Warm Tenor Sax", 5, 66, 48, 58),
-        "strings": ("Warm Tape Strings", 6, 49, 44, 52),
-        "drums": ("Lo-Fi Rimshot Kit", 9, None, 55, 64),
+        "melody": ("Flute Import", 2, 73, 40, 64),
+        "guitar": ("Guitar Chords Import", 1, 24, 64, 74),
+        "keys": ("Keyboard Import", 3, 4, 64, 68),
+        "bass": ("Bass Import", 4, 32, 62, 74),
+        "horns": ("Horn Import", 5, 66, 48, 58),
+        "strings": ("Strings Import", 6, 49, 72, 64),
+        "drums": ("Drums Import", 9, None, 55, 64),
     },
 }
 
@@ -83,7 +83,7 @@ def _build_track(
     events: list[tuple[int, bytes]],
     add_tape_wobble: bool = False,
 ) -> bytes:
-    """Build a complete MTrk chunk with -12dB headroom CC scaling and optional tape drift."""
+    """Build a complete MTrk chunk with usable MIDI level and optional tape drift."""
     track_events: list[tuple[int, int, bytes]] = []
     ch = channel & 0x0F
     if name:
@@ -93,9 +93,11 @@ def _build_track(
     if program is not None:
         track_events.append((0, 1, bytes([0xC0 | ch, program & 0x7F])))
 
-    # Conservative CC 7 (Channel Volume) and CC 11 (Expression) for ~-12 dB master headroom
-    track_events.append((0, 1, bytes([0xB0 | ch, 7, max(1, min(127, cc7_vol))])))
-    track_events.append((0, 1, bytes([0xB0 | ch, 11, 96])))
+    # The palette values retain the relative part balance; scale CC 7 up to avoid
+    # importing every part at a very low level in DAWs such as Logic Pro.
+    midi_volume = max(1, min(127, cc7_vol * 2))
+    track_events.append((0, 1, bytes([0xB0 | ch, 7, midi_volume])))
+    track_events.append((0, 1, bytes([0xB0 | ch, 11, 127])))
     # Gentle low-pass warmth (CC 74 Brightness) for 60s tube amp character
     track_events.append((0, 1, bytes([0xB0 | ch, 74, 54])))
 
@@ -273,7 +275,7 @@ def render_midi_bytes(song: dict) -> bytes:
         third = (pitches[1] - 12) if len(pitches) > 1 and (pitches[1] - 12) >= 28 else root
         upper = [p + 12 if p < 48 else p for p in pitches]
 
-        # Track 7: Warm Tape Strings (sustained pad across any meter)
+        # Track 7: Strings Import (sustained pad across any meter)
         str_ch, _, _, str_vel = palette["strings"][1:]
         for p in upper:
             _add_note(strings_ev, str_ch, p, start + 15, end - 25, vel=str_vel)
@@ -382,7 +384,7 @@ def render_midi_bytes(song: dict) -> bytes:
     # create an empty Track 0 channel strip on import
     melody_with_conductor = conductor + melody_ev
 
-    guitar_melody_track = ("Classical Acoustic Guitar Melody", 0, 24, 54, 68)
+    guitar_melody_track = ("Guitar Melody Import", 0, 24, 64, 80)
     tracks = [
         _build_track(*guitar_melody_track[:4], guitar_melody_ev, add_tape_wobble=False),
         _build_track(*palette["guitar"][:4], guitar_chords_ev, add_tape_wobble=False),

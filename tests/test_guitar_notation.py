@@ -212,14 +212,14 @@ class MidiTests(unittest.TestCase):
         tracks = midi_tracks(midi)
         self.assertEqual(len(tracks), 8)
         names = [
-            b"Classical Acoustic Guitar Melody",
-            b"Classical Acoustic Guitar Chords",
-            b"Mellotron Flute",
-            b"60s Warm Rhodes",
-            b"Upright Acoustic Bass",
-            b"Muted Jazz Trumpet",
-            b"Warm Tape Strings",
-            b"Lo-Fi Brush Kit",
+            b"Guitar Melody Import",
+            b"Guitar Chords Import",
+            b"Flute Import",
+            b"Keyboard Import",
+            b"Bass Import",
+            b"Horn Import",
+            b"Strings Import",
+            b"Drums Import",
         ]
         for track, name in zip(tracks, names):
             self.assertIn(name, track)
@@ -264,7 +264,7 @@ class MidiTests(unittest.TestCase):
         self.assertEqual(int.from_bytes(midi[10:12], "big"), 8)
         # The first melody guide note is F3 (MIDI 53), the third of Dm7.
         self.assertIn(b"\x90\x35", midi)
-        self.assertIn(b"60s Warm Rhodes", midi)
+        self.assertIn(b"Keyboard Import", midi)
 
 
 if __name__ == "__main__":

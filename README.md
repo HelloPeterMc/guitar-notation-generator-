@@ -8,7 +8,7 @@ Current application version: **0.2.0**.
 
 - Validate song and lesson-plan JSON, including pitches, guitar voicings, melody/tab agreement, chord spelling, and bar lengths.
 - Render agent-friendly Markdown and LilyPond source containing melody, chord, and tablature staves plus timed chord diagrams.
-- Generate an eight-track Type 1 MIDI arrangement: Classical Acoustic Guitar melody, Classical Acoustic Guitar chords, Mellotron Flute melody, keys, bass, horns, strings, and drums.
+- Generate an eight-track Type 1 MIDI arrangement: guitar melody, guitar chords, flute melody, keys, bass, horns, strings, and drums.
 - Compile a PDF when LilyPond 2.24 or later is installed.
 
 The musical input is intentionally event-based. It does not model every possible engraving or performance detail; review the generated score and MIDI before using them as final teaching or publication material.
@@ -67,7 +67,7 @@ Conventions:
 - `play_chord: true` plays the full chord voicing on the guitar track. An optional `melody` on that event is an independent guide line and can differ from the voicing's highest note; omit `tab`, since the chord voicing supplies it.
 - Optional bar-level `section` labels organize lesson sections in the Markdown output.
 
-MIDI tracks are ordered as follows: (1) Classical Acoustic Guitar melody, (2) Classical Acoustic Guitar chords, (3) Mellotron Flute melody, (4) keys, (5) bass, (6) horns, (7) strings, and (8) drums. The two melody tracks mirror the score's melody; track 2 plays each active chord at the beginning of every measure and again at each chord change within the measure.
+MIDI tracks are ordered as follows: (1) Guitar Melody Import, (2) Guitar Chords Import, (3) Flute Import, (4) Keyboard Import, (5) Bass Import, (6) Horn Import, (7) Strings Import, and (8) Drums Import. The two melody tracks mirror the score's melody; track 2 plays each active chord at the beginning of every measure and again at each chord change within the measure. Instrument sounds are selected separately in Logic's template. The file sends GM program changes for the non-drum parts (including keyboard program 4, bass program 32 or 35, guitar program 24, horn program 59, 60, or 66, and strings program 49); these are MIDI numbers, not Logic patch names. MIDI channel volume and expression are set higher to avoid importing all parts at a very low level; guitar and keyboard note velocities are raised, while flute volume and velocity are reduced. Final balance can still be adjusted in Logic.
 
 Supported meters use denominators 1, 2, 4, 8, or 16. The MIDI arranger adapts to common meters including 3/4, 4/4, 5/4, 6/8, 9/8, and 12/8, though its accompaniment is heuristic.
 
